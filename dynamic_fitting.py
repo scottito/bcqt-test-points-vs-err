@@ -1,38 +1,68 @@
+# %% use vscode's "jupyter" extension with interactive editing to use .py's as fake .ipynb's
+
 """
-
-### Dynamic Fitting
-
+### Dynamic Fitting Python Script
 The goal here is to perform the same fitting operation on a given set of data with the ability to modify: 
     subset of data used, fitting parameters, and fitting method employed. Therefore, we construct a generic dynamic_fit() 
     method that has input parameters for all of the above. In the future, we should probably try to do a more OOP approach 
     and create a "dataset" class, with generic class functions, and then that will give us the ability to create methods 
     that rely on using this "dataset" object directly. This would streamline what inputs & outputs are expected on what 
     side of the ("data" <-> "fit method" <-> "fit result") pipeline.
-
 """
 
 import numpy as np
-from lmfit import Model, Parameters
+import pandas as pd
 import matplotlib.pyplot as plt
 
+from lmfit import Model, Parameters
 
-def s21_hangarmode(f, f0, Q, Qc):
-    """ S21 Hangarmode Model
-    
-    returns 3 item list with the three
-    elements being:
-        [0] freq array - numpy array of floats in Hz, not GHz
-        [1] real components - numpy array of floats
-        [2] imag components - numpy array of floats
-    """
-    if np.max(f) < 1e9:
-        f = f * 1e9
-        print("\n >>>> S21_Hangarmode Model: Error, max of freq array is less than 1e9: ({:1.4e}) \n".format(np.max(f)))
-        print("   >>>>>> Converting frequency array to Hz from GHz. \n")
+# %%
+def import_csv_as_pd(csv_path, magn=True, unwrap=True, plot=True, verbose=False):
 
-    s21 = 1 - (Q/Qc)/(1 + 2j*Q*(f/f0 - 1)) 
+    df = pd.read_csv(csv_path, sep=" ", skiprows=5)
 
-    return [f, np.real(s21), np.imag(s21)]
+    ##
+    if verbose == True:
+        df.head()
+
+    ##
+    if unwrap == True:
+            freq = np.unwrap(df['!Freq'])
+    else:
+        freq = df['!Freq']
+
+    ##
+    if magn == True:
+        ax1.plot(freq, df['DBS21'], label='Mag S21')
+        ax2.plot(freq, df['AngS21'], color='orange', label='Ang S21')
+    else:
+        ampl = 10**(df['DBS21']/20)  # convert S21 dBm to linear
+        real = np.real(ampl)
+        imag = np.imag(ampl)        
+        ax1.plot(freq, real, label='Real S21', color='orange')
+        ax2.plot(freq, imag, label='Imag S21')
+
+    ax1.set_xlabel('Frequency')
+    ax1.set_ylabel('S21')
+    ax2.set_xlabel('Frequency')
+    ax2.set_ylabel('S21')
+    ax1.set_title('Frequency vs S21')
+    ax2.set_title('Frequency vs S21')
+    ax1.legend()
+    ax2.legend()
+    ax1.grid(True)
+    ax2.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+    ##
+    if plot == True:
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+        ax1.plot(freq, real, label='Real S21', color='orange')
+        ax2.plot(freq, imag, label='Imag S21')
+
+
+    return df
 
 
 def dynamic_fit(dataset_freqs, dataset_real, dataset_imag,  fitting_model, Q, Qc, **kwargs):
@@ -76,7 +106,7 @@ def dynamic_fit(dataset_freqs, dataset_real, dataset_imag,  fitting_model, Q, Qc
     # S21 will have a dip at resonance, to 1st order this is good appx
     resonance_idx = dataset_real.argmin() 
     f0_guess = dataset_freqs[resonance_idx]  # convert GHz to Hz
-
+    f0 = f0_guess
     # TODO: add conversion from dB -> linear units
     # ampl = 10**(df['DBS21']/20)  # convert S21 dBm to linear
 
@@ -138,3 +168,12 @@ def display_dynamic_fit(fit_result, model_obj):
     # fit_result
 
     return
+
+
+
+# %%
+
+""" now use dynamic fit on a test dataset """
+
+
+dataset_one = import_csv_as_pd("IdealResonator_CAP.csv", verbose=True)
