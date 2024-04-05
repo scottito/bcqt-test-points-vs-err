@@ -6,7 +6,7 @@
 
 import numpy as np
 
-def s21_hangarmode(f, f0, Q, Qc):
+def s21_hangarmode_abs(f, f0, Q, Qc, A):
 
     """ S21 Hangarmode Model
     
@@ -17,18 +17,19 @@ def s21_hangarmode(f, f0, Q, Qc):
         [2] imag components - numpy array of floats
     """
 
-
     if np.max(f) < 1e9:
+        print("\n >>>> S21_Hangarmode Model: Error, max of freq array is less than 1e9: (max={:1.2e}) \n".format(np.max(f)))
         f = f * 1e9
-        print("\n >>>> S21_Hangarmode Model: Error, max of freq array is less than 1e9: ({:1.4e}) \n".format(np.max(f)))
-        print("   >>>>>> Converting frequency array to Hz from GHz. \n")
+        print("   >>>>>> Converting frequency array to Hz from GHz. (max={:1.2e})\n".format(np.max(f)))
 
-    s21 = 1 - (Q/Qc)/(1 + 2j*Q*(f/f0 - 1)) 
 
-    return [f, np.real(s21), np.imag(s21)]
+    s21_dB = 1 - (Q/Qc)/(1 + 2j*Q*(f/f0 - 1))
+
+    return np.abs(s21_dB * A)
 
 def s21_reflection(f, f0, Q, Qc):
     return
 
 def s11(f, f0, Q, Qc):
     return
+# %%

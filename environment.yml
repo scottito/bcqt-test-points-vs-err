@@ -1,0 +1,8 @@
+name: base
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pippyenv
+  - conda[version='>=24.1.2']
+  - mamba[version='>=1.5.7']
