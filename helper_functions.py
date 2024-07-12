@@ -7,49 +7,6 @@ import math
 from lmfit import Model, Parameters
 from matplotlib import gridspec
 
-def import_AWR_csv_as_df(csv_path, s_param="21", magn=True, unwrap=True, plot=True, verbose=False):
-    # TODO: accept list of s params instead of single string
-    s = s_param  # shorthand
-
-    df = pd.read_csv(csv_path, sep=" ", skiprows=5)
-    
-    if verbose == True:
-        display(df.head())
-    
-    if unwrap == True:
-            freq = np.unwrap(df['!Freq'])
-    else:
-        freq = df['!Freq']
-    
-    if plot == True:
-        fig, (ax1, ax2) = plt.subplots(1, 2)
-
-        if magn == True:
-            ax1.plot(freq, df['DBS{}'.format(s)], label='Mag S{}'.format(s))
-            ax2.plot(freq, df['AngS{}'.format(s)], color='orange', label='Ang S{}'.format(s))
-    
-        else:
-            ampl = 10**(df['DBS{}'.format(s)]/20)  # convert Sxx dBm to linear
-            real = np.real(ampl)
-            imag = np.imag(ampl)   
-            
-            ax1.plot(freq, real, label='Real S{}'.format(s), color='blue') 
-            ax2.plot(freq, imag, label='Imag S{}'.format(s), color='red')
-            
-        for ax in fig.axes:
-            ax.set_xlabel('Frequency')
-            ax.set_ylabel('S{}'.format(s))
-
-            ax.set_title('Frequency vs S{}'.format(s))
-            ax.legend()
-            ax.grid(True)
-                
-        plt.suptitle('Plot of Dataset "{}"'.format(csv_path))
-        plt.tight_layout()
-        plt.show()
-
-    return df
-
 def display_resonator_data(freq, magn, phase):
     mosaic = """  AB
                   CC
@@ -82,6 +39,7 @@ def display_resonator_data(freq, magn, phase):
 
     return fig, axes
 
+
 def load_and_prep_csv(file_path):
     df = pd.read_csv(file_path, sep=",", names=['Frequency','dBm','Phase'])
 
@@ -95,6 +53,7 @@ def load_and_prep_csv(file_path):
     cmplx = df['Complex']
 
     return freq, magn, phase, cmplx
+
 
 def quick_fit_to_magnitude(lmfit_model, freq, magn, **kwargs):
     if 'f0' not in kwargs.keys():
@@ -117,6 +76,7 @@ def quick_fit_to_magnitude(lmfit_model, freq, magn, **kwargs):
     result_magn = lmfit_model.fit(magn, params, f=freq)
 
     return result_magn
+
 
 def col_by_n_plots(N, cols):
     """ creates a pre-structured figure of N plots in 'cols' columns """
